@@ -4,7 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Check, PackageCheck } from 'lucide-react';
+import { Check, PackageCheck, Upload, Server, Globe, Cpu, Image } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type OrderStep = {
   id: number;
@@ -14,7 +21,8 @@ type OrderStep = {
     name: string;
     label: string;
     type: string;
-    placeholder: string;
+    placeholder?: string;
+    options?: { value: string; label: string }[];
   }[];
 };
 
@@ -33,32 +41,67 @@ const orderSteps: OrderStep[] = [
       {
         name: "businessType",
         label: "Business Type",
-        type: "text",
-        placeholder: "e.g., E-commerce, Corporate, Portfolio"
+        type: "select",
+        options: [
+          { value: "ecommerce", label: "E-commerce" },
+          { value: "corporate", label: "Corporate Website" },
+          { value: "portfolio", label: "Portfolio" },
+          { value: "blog", label: "Blog" },
+          { value: "other", label: "Other" }
+        ]
       }
     ]
   },
   {
     id: 2,
-    title: "Website Requirements",
-    description: "Specify your website's technical needs",
+    title: "Website Features",
+    description: "Choose features for your website",
     fields: [
       {
-        name: "features",
-        label: "Required Features",
-        type: "text",
-        placeholder: "e.g., Online Store, Blog, Contact Form"
+        name: "aiFeatures",
+        label: "AI Integration",
+        type: "select",
+        options: [
+          { value: "none", label: "No AI Features" },
+          { value: "basic", label: "Basic AI (Chatbot)" },
+          { value: "advanced", label: "Advanced AI (Personalization & Analytics)" }
+        ]
       },
       {
-        name: "pagesCount",
-        label: "Number of Pages",
-        type: "number",
-        placeholder: "Enter estimated number of pages"
+        name: "hosting",
+        label: "Hosting Service",
+        type: "select",
+        options: [
+          { value: "none", label: "No Hosting Needed" },
+          { value: "basic", label: "Basic Hosting" },
+          { value: "premium", label: "Premium Hosting" }
+        ]
+      },
+      {
+        name: "domain",
+        label: "Domain Registration",
+        type: "select",
+        options: [
+          { value: "none", label: "I already have a domain" },
+          { value: "new", label: "Register new domain" }
+        ]
       }
     ]
   },
   {
     id: 3,
+    title: "Brand Assets",
+    description: "Upload your brand assets",
+    fields: [
+      {
+        name: "logo",
+        label: "Company Logo",
+        type: "file"
+      }
+    ]
+  },
+  {
+    id: 4,
     title: "Contact Information",
     description: "Your contact details for communication",
     fields: [
@@ -87,15 +130,110 @@ const orderSteps: OrderStep[] = [
 const Order = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>('');
 
   const handleInputChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Here you would typically send the data to your backend
+    console.log('Form submitted:', { ...formData, logo: logoFile });
+  };
+
+  const renderField = (field: OrderStep['fields'][0]) => {
+    switch (field.type) {
+      case 'select':
+        return (
+          <Select
+            onValueChange={(value) => handleInputChange(field.name, value)}
+            value={formData[field.name]}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={`Select ${field.label}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options?.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      case 'file':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-center w-full">
+              <label
+                htmlFor="logo-upload"
+                className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 relative"
+              >
+                {logoPreview ? (
+                  <div className="relative w-full h-full p-4">
+                    <img
+                      src={logoPreview}
+                      alt="Logo preview"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Image className="w-12 h-12 mb-4 text-gray-500" />
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
+                  </div>
+                )}
+                <input
+                  id="logo-upload"
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+              </label>
+            </div>
+            {logoPreview && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setLogoFile(null);
+                  setLogoPreview('');
+                }}
+              >
+                Remove Image
+              </Button>
+            )}
+          </div>
+        );
+      default:
+        return (
+          <Input
+            id={field.name}
+            type={field.type}
+            placeholder={field.placeholder}
+            value={formData[field.name] || ''}
+            onChange={(e) => handleInputChange(field.name, e.target.value)}
+            className="w-full"
+          />
+        );
+    }
   };
 
   return (
@@ -126,7 +264,10 @@ const Order = () => {
         <Card className="animate-fade-in">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <PackageCheck className="w-6 h-6 text-primary" />
+              {currentStep === 1 && <PackageCheck className="w-6 h-6 text-primary" />}
+              {currentStep === 2 && <Cpu className="w-6 h-6 text-primary" />}
+              {currentStep === 3 && <Upload className="w-6 h-6 text-primary" />}
+              {currentStep === 4 && <Globe className="w-6 h-6 text-primary" />}
               {orderSteps[currentStep - 1].title}
             </CardTitle>
           </CardHeader>
@@ -135,14 +276,7 @@ const Order = () => {
               {orderSteps[currentStep - 1].fields.map((field) => (
                 <div key={field.name} className="space-y-2">
                   <Label htmlFor={field.name}>{field.label}</Label>
-                  <Input
-                    id={field.name}
-                    type={field.type}
-                    placeholder={field.placeholder}
-                    value={formData[field.name] || ''}
-                    onChange={(e) => handleInputChange(field.name, e.target.value)}
-                    className="w-full"
-                  />
+                  {renderField(field)}
                 </div>
               ))}
 
@@ -196,7 +330,11 @@ const Order = () => {
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-green-500" />
-                  <span>Contact form integration</span>
+                  <span>Optional AI integration</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-5 h-5 text-green-500" />
+                  <span>Hosting and domain services available</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-green-500" />
