@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Check, PackageCheck, Upload, Server, Globe, Cpu, Image } from 'lucide-react';
+import { Check, PackageCheck, Upload, Server, Globe, Cpu, Image, CreditCard, Building2, DollarSign, MailCheck } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -122,6 +121,32 @@ const orderSteps: OrderStep[] = [
         label: "Phone Number",
         type: "tel",
         placeholder: "Enter your phone number"
+      },
+      {
+        name: "codeReview",
+        label: "Code Review Option",
+        type: "select",
+        options: [
+          { value: "none", label: "No code review needed" },
+          { value: "email", label: "Receive code review by email" }
+        ]
+      }
+    ]
+  },
+  {
+    id: 5,
+    title: "Payment Details",
+    description: "Choose your payment method",
+    fields: [
+      {
+        name: "paymentMethod",
+        label: "Payment Method",
+        type: "select",
+        options: [
+          { value: "creditCard", label: "Credit Card" },
+          { value: "bankTransfer", label: "Bank Transfer" },
+          { value: "paypal", label: "PayPal" }
+        ]
       }
     ]
   }
@@ -268,6 +293,7 @@ const Order = () => {
               {currentStep === 2 && <Cpu className="w-6 h-6 text-primary" />}
               {currentStep === 3 && <Upload className="w-6 h-6 text-primary" />}
               {currentStep === 4 && <Globe className="w-6 h-6 text-primary" />}
+              {currentStep === 5 && <CreditCard className="w-6 h-6 text-primary" />}
               {orderSteps[currentStep - 1].title}
             </CardTitle>
           </CardHeader>
@@ -277,6 +303,19 @@ const Order = () => {
                 <div key={field.name} className="space-y-2">
                   <Label htmlFor={field.name}>{field.label}</Label>
                   {renderField(field)}
+                  {field.name === "codeReview" && formData[field.name] === "email" && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      <MailCheck className="inline-block w-4 h-4 mr-2" />
+                      You'll receive code updates and review requests via email
+                    </p>
+                  )}
+                  {field.name === "paymentMethod" && (
+                    <div className="flex items-center gap-2 mt-2">
+                      {formData[field.name] === "creditCard" && <CreditCard className="w-4 h-4 text-primary" />}
+                      {formData[field.name] === "bankTransfer" && <Building2 className="w-4 h-4 text-primary" />}
+                      {formData[field.name] === "paypal" && <DollarSign className="w-4 h-4 text-primary" />}
+                    </div>
+                  )}
                 </div>
               ))}
 
@@ -339,6 +378,14 @@ const Order = () => {
                 <li className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-green-500" />
                   <span>Social media integration</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-5 h-5 text-green-500" />
+                  <span>Optional code review and updates via email</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-5 h-5 text-green-500" />
+                  <span>Flexible payment options</span>
                 </li>
               </ul>
             </CardContent>
